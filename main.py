@@ -21,7 +21,6 @@ from .permission import allowed
 from .recall import RecallManager
 from .storage import Storage, normalize_tag
 
-
 PLUGIN_NAME = "astrbot_plugin_laizhi"
 DEFAULT_MAX_SIZE_MB = 10
 DEFAULT_RECALL_SECONDS = 120
@@ -131,7 +130,9 @@ class LaizhiPlugin(Star):
         tag_name = normalize_tag(tag)
         if tag_name is None:
             event.stop_event()
-            yield event.plain_result("用法：添加 <标签名>（标签名不能包含空格或路径符号）")
+            yield event.plain_result(
+                "用法：添加 <标签名>（标签名不能包含空格或路径符号）"
+            )
             return
 
         try:
@@ -303,7 +304,9 @@ class LaizhiPlugin(Star):
             return
         if not references:
             event.stop_event()
-            yield event.plain_result("请回复要删除的图片、GIF、视频或音频，再发送 删除 <标签名>。")
+            yield event.plain_result(
+                "请回复要删除的图片、GIF、视频或音频，再发送 删除 <标签名>。"
+            )
             return
 
         media = None
@@ -470,7 +473,9 @@ class LaizhiPlugin(Star):
             summaries = await asyncio.to_thread(self.storage.list_tag_summaries)
             if not summaries:
                 event.stop_event()
-                yield event.plain_result("还没有任何标签。回复素材发送 添加 <标签名> 来创建。")
+                yield event.plain_result(
+                    "还没有任何标签。回复素材发送 添加 <标签名> 来创建。"
+                )
                 return
             lines: list[str] = []
             for summary in summaries[:100]:

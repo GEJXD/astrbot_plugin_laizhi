@@ -124,7 +124,9 @@ class MediaManager:
                     self.max_size_bytes,
                 )
 
-            sniffed = await asyncio.to_thread(self._sniff_file, temp_path, reference.name)
+            sniffed = await asyncio.to_thread(
+                self._sniff_file, temp_path, reference.name
+            )
             file_hash = await asyncio.to_thread(_sha256_file, temp_path)
             size = temp_path.stat().st_size
             return DownloadedMedia(
@@ -277,7 +279,9 @@ def _copy_local_file(source: str, target: Path, max_bytes: int) -> None:
                     break
                 total += len(chunk)
                 if total > max_bytes:
-                    raise MediaTooLarge(f"媒体超过 {max_bytes // (1024 * 1024)} MB 上限")
+                    raise MediaTooLarge(
+                        f"媒体超过 {max_bytes // (1024 * 1024)} MB 上限"
+                    )
                 target_file.write(chunk)
             target_file.flush()
             os.fsync(target_file.fileno())
@@ -296,7 +300,9 @@ async def _write_http_stream(content: Any, target: Path, max_bytes: int) -> None
                     continue
                 total += len(chunk)
                 if total > max_bytes:
-                    raise MediaTooLarge(f"媒体超过 {max_bytes // (1024 * 1024)} MB 上限")
+                    raise MediaTooLarge(
+                        f"媒体超过 {max_bytes // (1024 * 1024)} MB 上限"
+                    )
                 target_file.write(chunk)
             target_file.flush()
             os.fsync(target_file.fileno())
@@ -425,7 +431,9 @@ def _component_type(component: Any) -> str:
 
 def _is_reply(component: Any) -> bool:
     return _component_type(component) in {"reply", "repl"} or (
-        component.__class__.__name__.lower() == "reply" if component is not None else False
+        component.__class__.__name__.lower() == "reply"
+        if component is not None
+        else False
     )
 
 
@@ -449,7 +457,9 @@ def _source_from_component(component: Any) -> MediaReference | None:
     for value in candidates:
         if isinstance(value, str) and value.strip():
             source = value.strip()
-            if source.startswith(("http://", "https://", "file://", "base64://", "data:")):
+            if source.startswith(
+                ("http://", "https://", "file://", "base64://", "data:")
+            ):
                 break
             if os.path.exists(source):
                 break
@@ -460,7 +470,9 @@ def _source_from_component(component: Any) -> MediaReference | None:
     return MediaReference(source=source, name=name)
 
 
-def _collect_media(components: Any, *, skip_replies: bool = False) -> list[MediaReference]:
+def _collect_media(
+    components: Any, *, skip_replies: bool = False
+) -> list[MediaReference]:
     if not isinstance(components, (list, tuple)):
         return []
     result: list[MediaReference] = []

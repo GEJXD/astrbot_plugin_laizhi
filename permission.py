@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-
 LEVELS = ("everyone", "admin")
 DEFAULT_PERMISSIONS = {
     "add": "everyone",
@@ -38,9 +37,13 @@ def check(event: Any, config: Mapping[str, Any] | None, command: str) -> bool:
     permissions = _config_value(config, "perm", {})
     if not isinstance(permissions, Mapping):
         permissions = {}
-    required = str(
-        permissions.get(command, DEFAULT_PERMISSIONS.get(command, "everyone")),
-    ).strip().lower()
+    required = (
+        str(
+            permissions.get(command, DEFAULT_PERMISSIONS.get(command, "everyone")),
+        )
+        .strip()
+        .lower()
+    )
     if required == "admin":
         return _event_is_admin(event)
     return True

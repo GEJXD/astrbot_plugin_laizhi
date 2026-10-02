@@ -214,7 +214,7 @@ message_str = re.sub(r"\s+", " ", event.get_message_str().strip())
 for full_cmd in self.get_complete_command_names():
     if message_str.startswith(f"{full_cmd} ") or message_str == full_cmd:
         ok = True
-        message_str = message_str[len(full_cmd):].strip()
+        message_str = message_str[len(full_cmd) :].strip()
 ```
 
 即指令名后面**必须是空格或字符串结尾**。`添加猫猫` 既不等于 `添加`，也不以 `添加 ` 开头，所以匹配不上——这正是改用空格分隔的直接原因。改完之后：
@@ -231,7 +231,7 @@ for full_cmd in self.get_complete_command_names():
 if event.message_str.startswith(wake_prefix):
     is_wake = True
     event.is_at_or_wake_command = True
-    event.message_str = event.message_str[len(wake_prefix):].strip()
+    event.message_str = event.message_str[len(wake_prefix) :].strip()
 ```
 
 到 `CommandFilter` 时 `message_str` 已不含前缀。所以注册 `@filter.command("添加")`，用户配 `/` 就是 `/添加`，配 `%` 就是 `%添加`，**插件零感知**。需求 1 自动满足。
@@ -241,25 +241,25 @@ if event.message_str.startswith(wake_prefix):
 ```python
 from astrbot.api.event import filter, AstrMessageEvent
 
+
 @filter.command("添加")
-async def cmd_add(self, event: AstrMessageEvent, tag: str = ""):
-    ...
+async def cmd_add(self, event: AstrMessageEvent, tag: str = ""): ...
+
 
 @filter.command("来只", alias={"来张", "来个"})
-async def cmd_lai(self, event: AstrMessageEvent, tag: str = ""):
-    ...
+async def cmd_lai(self, event: AstrMessageEvent, tag: str = ""): ...
+
 
 @filter.command("删除")
-async def cmd_del(self, event: AstrMessageEvent, tag: str = ""):
-    ...
+async def cmd_del(self, event: AstrMessageEvent, tag: str = ""): ...
+
 
 @filter.command("alias")
-async def cmd_alias(self, event: AstrMessageEvent, src: str = "", dst: str = ""):
-    ...
+async def cmd_alias(self, event: AstrMessageEvent, src: str = "", dst: str = ""): ...
+
 
 @filter.command("标签")
-async def cmd_tags(self, event: AstrMessageEvent, tag: str = ""):
-    ...
+async def cmd_tags(self, event: AstrMessageEvent, tag: str = ""): ...
 ```
 
 ⚠️ **参数一律给默认值 `""`**。看 `validate_and_convert_params`：缺参数时会 `raise ValueError("必要参数缺失...")`，而 `WakingCheckStage` 捕获后会直接把 `f"插件 {name}: {e}"` 发给用户——那是一条很难看的报错。给默认值后不抛异常，由我们自己回一句「用法：`/添加 <标签名>`」。
@@ -268,10 +268,10 @@ async def cmd_tags(self, event: AstrMessageEvent, tag: str = ""):
 
 ```python
 def normalize_tag(raw: str) -> str | None:
-    name = unicodedata.normalize("NFKC", raw.strip())   # 全角→半角
+    name = unicodedata.normalize("NFKC", raw.strip())  # 全角→半角
     if not name or len(name) > 32:
         return None
-    if re.search(r'[\\/:*?"<>|\s]', name):              # 挡路径穿越与空白
+    if re.search(r'[\\/:*?"<>|\s]', name):  # 挡路径穿越与空白
         return None
     return name
 ```
@@ -330,7 +330,7 @@ async def fetch(src) -> bytes:
 ```python
 ALLOWED = {
     "image": {"jpg", "jpeg", "png", "webp", "bmp"},
-    "gif":   {"gif"},
+    "gif": {"gif"},
     "video": {"mp4", "mov", "mkv", "webm"},
     "audio": {"mp3", "wav", "amr", "ogg", "m4a"},
 }
@@ -352,6 +352,7 @@ ALLOWED = {
 # permission.py
 LEVELS = ("everyone", "admin")
 
+
 def check(event, config, cmd: str) -> bool:
     need = config.get("perm", {}).get(cmd, "everyone")
     return event.is_admin() if need == "admin" else True
@@ -366,7 +367,7 @@ def check(event, config, cmd: str) -> bool:
 ```python
 def group_allowed(event, config) -> bool:
     groups = config.get("enabled_groups", [])
-    if not groups:          # 空 = 全部放行
+    if not groups:  # 空 = 全部放行
         return True
     return event.get_group_id() in groups
 ```
@@ -442,12 +443,12 @@ message_id = payload["message_id"]
 
 ```python
 # 每个群一个计数器
-outstanding: dict[str, int]      # group_id -> 当前未撤回数
+outstanding: dict[str, int]  # group_id -> 当前未撤回数
 
-max_outstanding = config["max_outstanding"]   # 默认 3
+max_outstanding = config["max_outstanding"]  # 默认 3
 
 if outstanding.get(gid, 0) >= max_outstanding:
-    return          # 直接丢弃，不回复、不排队（需求明确「丢弃」）
+    return  # 直接丢弃，不回复、不排队（需求明确「丢弃」）
 ```
 
 - 发送成功 `+1`，撤回完成（无论成功失败）`-1`，用 `try/finally` 保证**一定回收**，否则一次撤回失败就永久占死一个名额。
@@ -459,12 +460,12 @@ if outstanding.get(gid, 0) >= max_outstanding:
 ```python
 async def _schedule_recall(self, bot, gid, message_id, delay: int):
     try:
-        await asyncio.sleep(delay)          # 默认 120
+        await asyncio.sleep(delay)  # 默认 120
         await bot.call_action("delete_msg", message_id=int(message_id))
     except Exception as e:
         logger.warning(f"撤回 {message_id} 失败: {e}")
     finally:
-        self._release(gid, message_id)      # 名额必须回收
+        self._release(gid, message_id)  # 名额必须回收
 ```
 
 用 `asyncio.create_task`，**不要用 `threading.Timer`**（异步环境里起线程做延时是浪费且难管理）。

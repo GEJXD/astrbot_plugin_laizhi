@@ -430,7 +430,9 @@ class Storage:
             ).fetchone()
             return self._row_to_file(row) if row is not None else None
 
-    def list_tag_file_names(self, file_id: int, exclude_tag_id: int | None = None) -> list[str]:
+    def list_tag_file_names(
+        self, file_id: int, exclude_tag_id: int | None = None
+    ) -> list[str]:
         with self._lock:
             query = """
                 SELECT t.name
@@ -545,7 +547,9 @@ class Storage:
                         count_row["count"] if count_row is not None else 0,
                     )
                 summaries.append(
-                    TagSummary(tag=tag, effective_tag=effective, count=counts[effective.id]),
+                    TagSummary(
+                        tag=tag, effective_tag=effective, count=counts[effective.id]
+                    ),
                 )
             return summaries
 
@@ -567,8 +571,7 @@ class Storage:
                 (effective_id, max(1, int(limit))),
             ).fetchall()
             return [
-                (self._row_to_file(row), int(row["relation_added_at"]))
-                for row in rows
+                (self._row_to_file(row), int(row["relation_added_at"])) for row in rows
             ]
 
     def merge_tag(self, source_id: int, target_id: int) -> MergeResult:
@@ -686,7 +689,9 @@ class Storage:
                 PendingRecall(
                     message_id=str(row["message_id"]),
                     session_id=str(row["session_id"]),
-                    group_id=str(row["group_id"]) if row["group_id"] is not None else None,
+                    group_id=str(row["group_id"])
+                    if row["group_id"] is not None
+                    else None,
                     recall_at=int(row["recall_at"]),
                 )
                 for row in rows
