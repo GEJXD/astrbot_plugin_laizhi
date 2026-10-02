@@ -383,6 +383,34 @@ class Storage:
             )
             return cursor.rowcount == 1
 
+    def get_file_tag_relation(
+        self, file_id: int, tag_id: int
+    ) -> tuple[bool, str | None]:
+        """Return whether a file-tag relation exists and who added it."""
+
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT added_by FROM file_tags WHERE file_id = ? AND tag_id = ?",
+                (int(file_id), int(tag_id)),
+            ).fetchone()
+            if row is None:
+                return False, None
+            added_by = row["added_by"]
+            return True, str(added_by) if added_by is not None else None
+
+    def detach_owned(self, file_id: int, tag_id: int, added_by: str) -> bool:
+        """Detach only when the requester owns the file-tag relation."""
+
+        with self._lock:
+            cursor = self._conn.execute(
+                """
+                DELETE FROM file_tags
+                WHERE file_id = ? AND tag_id = ? AND added_by = ?
+                """,
+                (int(file_id), int(tag_id), str(added_by)),
+            )
+            return cursor.rowcount == 1
+
     def detach_missing_file(self, file_id: int, tag_id: int) -> bool:
         """Remove a relation when a selected blob was found missing on disk."""
 

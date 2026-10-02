@@ -28,8 +28,18 @@ class StorageTest(unittest.TestCase):
                 )
                 source = storage.get_or_create_tag("猫猫", "user")
                 target = storage.get_or_create_tag("动物", "admin")
-                self.assertEqual(storage.attach(file_record.id, source.id), "added")
+                self.assertEqual(
+                    storage.attach(file_record.id, source.id, added_by="user"),
+                    "added",
+                )
                 self.assertEqual(storage.attach(file_record.id, source.id), "duplicate")
+                self.assertEqual(
+                    storage.get_file_tag_relation(file_record.id, source.id),
+                    (True, "user"),
+                )
+                self.assertFalse(
+                    storage.detach_owned(file_record.id, source.id, "other-user"),
+                )
 
                 merged = storage.merge_tag(source.id, target.id)
                 self.assertEqual(merged.migrated, 1)

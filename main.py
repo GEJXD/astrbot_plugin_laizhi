@@ -17,7 +17,7 @@ from .media import (
     UnsupportedMedia,
     extract_media_references,
 )
-from .permission import allowed
+from .permission import allowed, is_admin
 from .recall import RecallManager
 from .storage import Storage, normalize_tag
 
@@ -328,14 +328,39 @@ class LaizhiPlugin(Star):
                 event.stop_event()
                 yield event.plain_result(f"还没有「{tag_name}」这个标签。")
                 return
-            detached = await asyncio.to_thread(
-                self.storage.detach,
+            relation_exists, added_by = await asyncio.to_thread(
+                self.storage.get_file_tag_relation,
                 file_record.id,
                 resolved_tag.id,
             )
-            if not detached:
+            if not relation_exists:
                 event.stop_event()
                 yield event.plain_result(f"这份素材不在「{tag_name}」里。")
+                return
+            admin = is_admin(event)
+            sender_id = self._sender_id(event)
+            if not admin and (not sender_id or added_by != sender_id):
+                event.stop_event()
+                yield event.plain_result(
+                    "只有添加这份素材的人或管理员可以删除。",
+                )
+                return
+            if admin:
+                detached = await asyncio.to_thread(
+                    self.storage.detach,
+                    file_record.id,
+                    resolved_tag.id,
+                )
+            else:
+                detached = await asyncio.to_thread(
+                    self.storage.detach_owned,
+                    file_record.id,
+                    resolved_tag.id,
+                    sender_id,
+                )
+            if not detached:
+                event.stop_event()
+                yield event.plain_result("删除失败：素材关系刚刚发生变化，请重试。")
                 return
 
             remaining = await asyncio.to_thread(

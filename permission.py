@@ -31,6 +31,12 @@ def _event_is_admin(event: Any) -> bool:
     return str(role).lower() == "admin"
 
 
+def is_admin(event: Any) -> bool:
+    """Return whether AstrBot identifies the event sender as an admin."""
+
+    return _event_is_admin(event)
+
+
 def check(event: Any, config: Mapping[str, Any] | None, command: str) -> bool:
     """Check the runtime permission configured for one command."""
 
@@ -45,7 +51,7 @@ def check(event: Any, config: Mapping[str, Any] | None, command: str) -> bool:
         .lower()
     )
     if required == "admin":
-        return _event_is_admin(event)
+        return is_admin(event)
     return True
 
 
@@ -101,4 +107,4 @@ def allowed(
     return check(event, config, command) and group_allowed(event, config, command)
 
 
-__all__ = ["LEVELS", "allowed", "check", "group_allowed"]
+__all__ = ["LEVELS", "allowed", "check", "group_allowed", "is_admin"]

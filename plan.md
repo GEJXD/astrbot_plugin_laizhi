@@ -525,12 +525,13 @@ async def _schedule_recall(self, bot, gid, message_id, delay: int):
  │    注：必须重新下载算 hash，不能信 URL——QQ 的图片 URL 带时效参数，同图不同 URL
  ├─ files 按 hash 查 → 不存在则「这个不在库里」
  ├─ resolve_tag → 不存在则提示
- ├─ detach(file, tag) → False 则「这个不在「猫猫」里」
+ ├─ 查询 file_tags.added_by：非管理员且不是添加者 → 拒绝删除
+ ├─ 按拥有者条件 detach(file, tag) → False 则提示关系已变化
  ├─ 若该 file 已无任何 tag → 按 gc_orphan 配置删物理文件（默认 true）
  └─ 回「已从「猫猫」移除，剩余 36 个」
 ```
 
-注意：删除只解除**当前 tag** 的关系，文件若还挂在别的 tag 上则物理文件保留（需求 3 的必然推论）。回复里要说清楚：「已从「猫猫」移除（仍在「动物」中）」。
+注意：删除只解除**当前 tag** 的关系，且只有把该文件添加到当前 tag 的用户或 AstrBot 管理员可以删除。文件若还挂在别的 tag 上则物理文件保留（需求 3 的必然推论）。回复里要说清楚：「已从「猫猫」移除（仍在「动物」中）」。
 
 ---
 
