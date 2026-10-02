@@ -1,0 +1,100 @@
+{
+  "max_size_mb": {
+    "description": "单个文件大小上限（MB）",
+    "type": "int",
+    "default": 10,
+    "hint": "超过上限会在流式下载过程中停止；图片/音频发送时还会受到协议端限制",
+    "slider": { "min": 1, "max": 100, "step": 1 }
+  },
+  "allow_arbitrary_file": {
+    "description": "允许收录白名单之外的任意文件类型",
+    "type": "bool",
+    "default": false,
+    "obvious_hint": true,
+    "hint": "开启后可能收录并分发 zip、exe 等文件，请确认群聊使用场景"
+  },
+  "recall_after_seconds": {
+    "description": "发送后自动撤回延迟（秒），0 表示不撤回",
+    "type": "int",
+    "default": 120,
+    "hint": "仅 aiocqhttp 群聊的直接发送路径支持自动撤回"
+  },
+  "max_outstanding": {
+    "description": "每群同时存在的未撤回素材上限",
+    "type": "int",
+    "default": 3,
+    "hint": "达到上限后新的 /来只 指令会被丢弃"
+  },
+  "cooldown_seconds": {
+    "description": "同群 /来只 最小间隔（秒）",
+    "type": "int",
+    "default": 3
+  },
+  "notify_on_throttle": {
+    "description": "被限流时是否提示用户",
+    "type": "bool",
+    "default": false
+  },
+  "enabled_groups": {
+    "description": "允许使用的群号白名单，留空表示全部允许",
+    "type": "list",
+    "default": [],
+    "hint": "群号可以填写为字符串或数字"
+  },
+  "whitelist_applies_to": {
+    "description": "群白名单生效的指令",
+    "type": "list",
+    "default": ["lai", "add", "del"]
+  },
+  "allow_private": {
+    "description": "是否允许私聊使用",
+    "type": "bool",
+    "default": false
+  },
+  "perm": {
+    "description": "各指令所需权限",
+    "type": "object",
+    "items": {
+      "add": {
+        "description": "添加",
+        "type": "string",
+        "default": "everyone",
+        "options": ["everyone", "admin"]
+      },
+      "lai": {
+        "description": "来只",
+        "type": "string",
+        "default": "everyone",
+        "options": ["everyone", "admin"]
+      },
+      "del": {
+        "description": "删除",
+        "type": "string",
+        "default": "everyone",
+        "options": ["everyone", "admin"]
+      },
+      "alias": {
+        "description": "合并标签",
+        "type": "string",
+        "default": "admin",
+        "options": ["everyone", "admin"]
+      },
+      "tags": {
+        "description": "查看标签",
+        "type": "string",
+        "default": "everyone",
+        "options": ["everyone", "admin"]
+      }
+    }
+  },
+  "gc_orphan": {
+    "description": "文件不再属于任何标签时删除物理文件",
+    "type": "bool",
+    "default": true
+  },
+  "download_timeout": {
+    "description": "网络媒体下载超时（秒）",
+    "type": "int",
+    "default": 30
+  }
+}
