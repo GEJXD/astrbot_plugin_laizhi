@@ -60,6 +60,13 @@ class MergeResult:
     duplicates: int
 
 
+@dataclass(frozen=True, slots=True)
+class TagDeleteResult:
+    tag: TagRecord
+    detached: int
+    orphaned: int
+
+
 _TAG_INVALID_RE = re.compile(r"[\\/:*?\"<>|\s]")
 
 
@@ -192,6 +199,66 @@ class Storage:
             (int(tag_id),),
         ).fetchone()
         return self._row_to_tag(row) if row is not None else None
+
+    def get_tag_by_id(self, tag_id: int) -> TagRecord | None:
+        """Return one tag by its database id."""
+
+        with self._lock:
+            return self._tag_by_id_locked(int(tag_id))
+
+    def resolve_tag_id(self, tag_id: int) -> int | None:
+        """Resolve a tag id to its current non-alias target."""
+
+        with self._lock:
+            return self._resolve_tag_id_locked(int(tag_id))
+
+    def rename_tag(self, tag_id: int, name: str) -> TagRecord:
+        """Rename a tag while preserving its aliases and file relations."""
+
+        normalized = normalize_tag(name)
+        if normalized is None:
+            raise ValueError("标签名不能为空，且不能包含空格或路径符号")
+        with self._lock:
+            if self._tag_by_id_locked(int(tag_id)) is None:
+                raise ValueError("标签不存在")
+            try:
+                self._conn.execute(
+                    "UPDATE tags SET name = ? WHERE id = ?",
+                    (normalized, int(tag_id)),
+                )
+            except sqlite3.IntegrityError as exc:
+                raise ValueError("标签名称已存在") from exc
+            renamed = self._tag_by_id_locked(int(tag_id))
+            if renamed is None:  # pragma: no cover - defensive database failure
+                raise RuntimeError("标签更新失败")
+            return renamed
+
+    def delete_tag(self, tag_id: int) -> TagDeleteResult:
+        """Delete a tag and its relations, refusing to orphan its aliases."""
+
+        with self._lock:
+            tag = self._tag_by_id_locked(int(tag_id))
+            if tag is None:
+                raise ValueError("标签不存在")
+            if tag.alias_of is None:
+                alias_row = self._conn.execute(
+                    "SELECT 1 FROM tags WHERE alias_of = ? LIMIT 1",
+                    (tag.id,),
+                ).fetchone()
+                if alias_row is not None:
+                    raise ValueError("请先删除该标签的别名")
+
+            cursor = self._conn.execute(
+                "DELETE FROM file_tags WHERE tag_id = ?",
+                (tag.id,),
+            )
+            self._conn.execute("DELETE FROM tags WHERE id = ?", (tag.id,))
+            orphaned = self.gc_orphans()
+            return TagDeleteResult(
+                tag=tag,
+                detached=int(cursor.rowcount),
+                orphaned=orphaned,
+            )
 
     def _resolve_tag_id_locked(self, tag_id: int) -> int | None:
         """Resolve at most one alias hop and defend against corrupt cycles."""
@@ -351,6 +418,16 @@ class Storage:
             row = self._conn.execute(
                 "SELECT * FROM files WHERE hash = ?",
                 (str(file_hash).lower(),),
+            ).fetchone()
+            return self._row_to_file(row) if row is not None else None
+
+    def get_file(self, file_id: int) -> FileRecord | None:
+        """Return one stored file by id without exposing database rows."""
+
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM files WHERE id = ?",
+                (int(file_id),),
             ).fetchone()
             return self._row_to_file(row) if row is not None else None
 
@@ -602,6 +679,69 @@ class Storage:
                 (self._row_to_file(row), int(row["relation_added_at"])) for row in rows
             ]
 
+    def list_files_for_tag(
+        self,
+        tag_id: int,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+        query: str | None = None,
+    ) -> tuple[list[tuple[FileRecord, str | None, int]], int]:
+        """List a tag's files with relation metadata for the WebUI."""
+
+        with self._lock:
+            effective_id = self._resolve_tag_id_locked(int(tag_id))
+            if effective_id is None:
+                return [], 0
+
+            where = ["ft.tag_id = ?"]
+            params: list[object] = [effective_id]
+            normalized_query = str(query or "").strip()
+            if normalized_query:
+                escaped = (
+                    normalized_query.replace("\\", "\\\\")
+                    .replace("%", "\\%")
+                    .replace("_", "\\_")
+                )
+                pattern = f"%{escaped}%"
+                where.append(
+                    "(f.hash LIKE ? ESCAPE '\\' OR f.ext LIKE ? ESCAPE '\\' "
+                    "OR f.kind LIKE ? ESCAPE '\\' OR COALESCE(f.mime, '') LIKE ? ESCAPE '\\')",
+                )
+                params.extend([pattern] * 4)
+            where_sql = " AND ".join(where)
+            count_row = self._conn.execute(
+                f"""
+                SELECT COUNT(*) AS count
+                FROM files AS f
+                JOIN file_tags AS ft ON ft.file_id = f.id
+                WHERE {where_sql}
+                """,
+                params,
+            ).fetchone()
+            total = int(count_row["count"] if count_row is not None else 0)
+            bounded_limit = max(1, min(500, int(limit)))
+            bounded_offset = max(0, int(offset))
+            rows = self._conn.execute(
+                f"""
+                SELECT f.*, ft.added_by, ft.added_at AS relation_added_at
+                FROM files AS f
+                JOIN file_tags AS ft ON ft.file_id = f.id
+                WHERE {where_sql}
+                ORDER BY ft.added_at DESC, f.id DESC
+                LIMIT ? OFFSET ?
+                """,
+                [*params, bounded_limit, bounded_offset],
+            ).fetchall()
+            return [
+                (
+                    self._row_to_file(row),
+                    str(row["added_by"]) if row["added_by"] is not None else None,
+                    int(row["relation_added_at"]),
+                )
+                for row in rows
+            ], total
+
     def merge_tag(self, source_id: int, target_id: int) -> MergeResult:
         """Merge source relations into target and retain source as an alias."""
 
@@ -758,6 +898,7 @@ __all__ = [
     "MergeResult",
     "PendingRecall",
     "Storage",
+    "TagDeleteResult",
     "TagRecord",
     "TagSummary",
     "normalize_tag",

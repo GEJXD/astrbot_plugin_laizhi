@@ -20,6 +20,7 @@ from .media import (
 from .permission import allowed, is_admin
 from .recall import RecallManager
 from .storage import Storage, normalize_tag
+from .webui import TagWebUI
 
 PLUGIN_NAME = "astrbot_plugin_laizhi"
 DEFAULT_MAX_SIZE_MB = 10
@@ -87,6 +88,12 @@ class LaizhiPlugin(Star):
                 False,
             ),
         )
+        self.webui = TagWebUI(
+            self.storage,
+            self.media,
+            gc_orphan=_config_bool(self.config.get("gc_orphan"), True),
+        )
+        self.webui.register(context)
         self._closed = False
 
     async def initialize(self) -> None:

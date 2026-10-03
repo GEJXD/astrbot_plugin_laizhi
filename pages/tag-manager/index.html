@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>来只标签管理</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">ASTRBOT PLUGIN</p>
+          <h1>来只标签管理</h1>
+          <p class="subtitle">在 WebUI 中维护标签及其媒体内容。</p>
+        </div>
+        <button id="refresh-all" class="button secondary" type="button">刷新</button>
+      </header>
+
+      <div id="notice" class="notice" role="status" aria-live="polite"></div>
+
+      <section class="workspace">
+        <aside class="sidebar panel">
+          <div class="panel-heading">
+            <h2>标签</h2>
+            <span id="tag-total" class="muted">0</span>
+          </div>
+          <form id="create-tag-form" class="inline-form">
+            <label class="sr-only" for="new-tag-name">新标签名</label>
+            <input id="new-tag-name" name="name" maxlength="32" placeholder="新标签名" required />
+            <button class="button primary" type="submit">新增</button>
+          </form>
+          <label class="sr-only" for="tag-search">搜索标签</label>
+          <input id="tag-search" class="search-input" placeholder="搜索标签" />
+          <div id="tag-list" class="tag-list" aria-live="polite"></div>
+        </aside>
+
+        <section class="content panel">
+          <div id="empty-state" class="empty-state">
+            <div class="empty-icon">✦</div>
+            <h2>选择一个标签</h2>
+            <p>先新增标签，或从左侧选择已有标签。</p>
+          </div>
+
+          <div id="tag-detail" class="hidden">
+            <div class="detail-heading">
+              <div>
+                <p class="eyebrow">TAG</p>
+                <h2 id="selected-tag-name"></h2>
+                <p id="selected-tag-meta" class="muted"></p>
+              </div>
+              <div class="detail-actions">
+                <button id="rename-tag" class="button secondary" type="button">重命名</button>
+                <button id="delete-tag" class="button danger" type="button">删除标签</button>
+              </div>
+            </div>
+
+            <div class="toolbar">
+              <label class="upload-button button primary" for="file-upload">上传内容</label>
+              <input id="file-upload" type="file" />
+              <label class="sr-only" for="file-search">搜索内容</label>
+              <input id="file-search" class="search-input compact" placeholder="按格式、类型或哈希搜索" />
+              <button id="refresh-files" class="button secondary" type="button">刷新内容</button>
+            </div>
+
+            <div id="file-list" class="file-list" aria-live="polite"></div>
+            <div class="pagination">
+              <button id="previous-page" class="button secondary" type="button">上一页</button>
+              <span id="page-info" class="muted">第 1 页</span>
+              <button id="next-page" class="button secondary" type="button">下一页</button>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

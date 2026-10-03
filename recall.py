@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import time
 import uuid
 from collections import defaultdict
@@ -15,8 +14,18 @@ except ImportError:  # pragma: no cover - allows direct module tests
 
 try:
     from astrbot.api import logger
-except ImportError:  # pragma: no cover - direct unit-test fallback
-    logger = logging.getLogger(__name__)
+except ImportError:  # pragma: no cover - direct unit tests can omit AstrBot
+    logger = None
+
+
+def _log(level: str, message: str, *args: object) -> None:
+    """Write through AstrBot's logger when the plugin is running in AstrBot."""
+
+    if logger is None:
+        return
+    method = getattr(logger, level, None)
+    if callable(method):
+        method(message, *args)
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,7 +78,8 @@ class RecallManager:
                 group_id = item.group_id or item.session_id
                 self._outstanding[group_id] += 1
         if pending:
-            logger.info(
+            _log(
+                "info",
                 "[LAIZHI] 已加载 %d 条待撤回记录，等待消息平台连接后补偿",
                 len(pending),
             )
@@ -154,7 +164,7 @@ class RecallManager:
             raise
         except Exception as exc:
             await self._release_reservation(reservation)
-            logger.warning("[LAIZHI] OneBot 发送失败，降级为框架发送：%s", exc)
+            _log("warning", "[LAIZHI] OneBot 发送失败，降级为框架发送：%s", exc)
             return SendResult(
                 fallback_component=component,
                 error=str(exc),
@@ -263,7 +273,8 @@ class RecallManager:
             cancelled = True
             return
         except Exception as exc:
-            logger.warning(
+            _log(
+                "warning",
                 "[LAIZHI] 撤回消息 %s 失败：%s",
                 pending.message_id,
                 exc,
@@ -276,7 +287,7 @@ class RecallManager:
                         pending.message_id,
                     )
                 except Exception as exc:
-                    logger.warning("[LAIZHI] 清理待撤回记录失败：%s", exc)
+                    _log("warning", "[LAIZHI] 清理待撤回记录失败：%s", exc)
                 async with self._lock:
                     self._pending.pop(pending.message_id, None)
                     self._scheduled.pop(pending.message_id, None)

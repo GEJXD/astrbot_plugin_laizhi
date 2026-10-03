@@ -46,6 +46,17 @@ class StorageTest(unittest.TestCase):
                 self.assertEqual(merged.duplicates, 0)
                 self.assertEqual(storage.resolve_tag("猫猫").id, target.id)
                 self.assertEqual(storage.count_for_tag(target.id), 1)
+                files, total = storage.list_files_for_tag(target.id, query="bin")
+                self.assertEqual(total, 1)
+                self.assertEqual(files[0][0].id, file_record.id)
+                self.assertEqual(storage.get_file(file_record.id), file_record)
+
+                managed = storage.get_or_create_tag("管理", "admin")
+                renamed = storage.rename_tag(managed.id, "管理页")
+                self.assertEqual(renamed.name, "管理页")
+                deleted = storage.delete_tag(renamed.id)
+                self.assertEqual(deleted.tag.id, managed.id)
+                self.assertIsNone(storage.get_tag_by_id(managed.id))
 
                 final_target = storage.get_or_create_tag("哺乳类", "admin")
                 storage.merge_tag(target.id, final_target.id)

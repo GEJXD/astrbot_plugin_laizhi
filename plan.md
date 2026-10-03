@@ -45,7 +45,7 @@
 ### 1.2 不做（v1 范围外）
 
 - 不做内容识别/自动打标，不接 LLM。
-- 不做 Web 管理面板，只用 AstrBot 自带插件配置页。
+- 已新增 AstrBot WebUI Page，可在插件详情页维护 tag 及媒体内容；仍不做独立端口 Web 服务。
 - 不做跨平台/跨实例同步与云备份。
 - 不做 tag 模糊匹配（按需求明确排除）。
 
@@ -62,6 +62,8 @@ astrbot_plugin_laizhi/
 ├── media.py             # 下载、magic 嗅探、kind 判定、hash
 ├── recall.py            # 发送-撤回-名额回收闭环
 ├── permission.py        # 运行时权限与群白名单
+├── webui.py             # WebUI API：tag 与媒体内容 CRUD
+├── pages/tag-manager/   # AstrBot WebUI Page 静态资源
 ├── metadata.yaml
 ├── _conf_schema.json
 ├── requirements.txt

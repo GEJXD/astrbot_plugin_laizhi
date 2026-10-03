@@ -1,10 +1,10 @@
 name: astrbot_plugin_laizhi
 display_name: 来只
-desc: 收集群友逆天素材，按 tag 归档，随机发送并支持自动撤回
-short_desc: 回复素材「/添加 xx」入库，「/来只 xx」随机抽取
-version: 0.1.0
+desc: 收集群友逆天素材，按 tag 归档，随机发送并支持自动撤回及 WebUI 管理
+short_desc: 回复素材「/添加 xx」入库，「/来只 xx」随机抽取；WebUI 管理标签和素材
+version: 0.2.0
 author: GEJXD
 repo: https://github.com/GEJXD/astrbot_plugin_laizhi
 support_platforms:
   - aiocqhttp
-astrbot_version: ">=4.9.2"
+astrbot_version: ">=4.24.1"
