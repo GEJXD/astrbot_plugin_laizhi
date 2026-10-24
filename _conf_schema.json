@@ -6,6 +6,13 @@
     "hint": "超过上限会在流式下载过程中停止；图片/音频发送时还会受到协议端限制",
     "slider": { "min": 1, "max": 100, "step": 1 }
   },
+  "tag_list_limit": {
+    "description": "/标签 随机展示条数",
+    "type": "int",
+    "default": 10,
+    "hint": "不指定标签名时，每次随机展示不重复的标签；标签不足时全部展示",
+    "slider": { "min": 1, "max": 100, "step": 1 }
+  },
   "allow_arbitrary_file": {
     "description": "允许收录白名单之外的任意文件类型",
     "type": "bool",

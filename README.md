@@ -15,7 +15,7 @@
 /来张 猫猫
 /来个 猫猫
 
-查看全部标签：
+随机查看标签（默认最多 10 条）：
 /标签
 
 查看单个标签：
@@ -83,6 +83,7 @@ data/plugin_data/astrbot_plugin_laizhi/
 插件配置可以在 AstrBot WebUI 的插件配置页修改，主要选项包括：
 
 - `max_size_mb`：单文件大小上限。
+- `tag_list_limit`：`/标签` 每次随机展示的条数，默认 `10`，可设为 `1～100`；单次不重复，标签不足时全部展示。
 - `allow_arbitrary_file`：是否允许白名单外的文件。
 - `recall_after_seconds`：自动撤回延迟，设为 `0` 关闭撤回。
 - `max_outstanding`、`cooldown_seconds`：每群未撤回名额和最小间隔。

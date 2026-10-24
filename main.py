@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import random
 from datetime import datetime
 from typing import Any
 
@@ -28,6 +29,7 @@ DEFAULT_RECALL_SECONDS = 120
 DEFAULT_MAX_OUTSTANDING = 3
 DEFAULT_COOLDOWN_SECONDS = 3
 DEFAULT_DOWNLOAD_TIMEOUT = 30
+DEFAULT_TAG_LIST_LIMIT = 10
 
 
 class LaizhiPlugin(Star):
@@ -509,16 +511,25 @@ class LaizhiPlugin(Star):
                     "还没有任何标签。回复素材发送 添加 <标签名> 来创建。"
                 )
                 return
+            limit = _config_int(
+                self.config.get("tag_list_limit"),
+                DEFAULT_TAG_LIST_LIMIT,
+                minimum=1,
+                maximum=100,
+            )
+            selected = random.sample(summaries, min(limit, len(summaries)))
             lines: list[str] = []
-            for summary in summaries[:100]:
+            for summary in selected:
                 if summary.tag.alias_of is not None:
                     lines.append(
                         f"- {summary.tag.name}（别名 → {summary.effective_tag.name}）：{summary.count} 个",
                     )
                 else:
                     lines.append(f"- {summary.tag.name}：{summary.count} 个")
-            if len(summaries) > 100:
-                lines.append(f"……还有 {len(summaries) - 100} 个标签未显示。")
+            if len(summaries) > len(selected):
+                lines.append(
+                    f"……还有 {len(summaries) - len(selected)} 个标签未显示，可再次发送指令随机查看。"
+                )
             event.stop_event()
             yield event.plain_result("标签列表：\n" + "\n".join(lines))
         except Exception:
